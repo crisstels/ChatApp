@@ -33,6 +33,13 @@ namespace ChatApp
             _reciever = reciever;
         }
 
+        public Message()
+        {
+            Text = "";
+            Sender = "";
+            Reciever = "";
+        }
+
         public void DisplayMessage()
         {
             Console.WriteLine(Text);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 
 namespace ChatApp
 {
@@ -36,7 +37,7 @@ namespace ChatApp
             _ipAdresse = ipAdresse;
             _port = port;
         }
-        
+
         public Participant(string ipAdresse, int port, Message text)
         {
             _ipAdresse = ipAdresse;
@@ -44,16 +45,22 @@ namespace ChatApp
             _text = text;
         }
 
+        public Participant()
+        {
+            IpAdresse = "";
+            Port = 0;
+            Text = new Message();
+        }
+
         public TcpListener InitTcpServer()
         {
             TcpListener server=null;
             try
             {
-                // Set the TcpListener on port 3000.
+                // Set the TcpListener
                 Int32 port = Port;
                 IPAddress localAddr = IPAddress.Parse(IpAdresse);
-
-                // TcpListener server = new TcpListener(port);
+                
                 server = new TcpListener(localAddr, port);
 
                 // Start listening for client requests.
@@ -73,46 +80,47 @@ namespace ChatApp
             // Buffer for reading data
             Byte[] bytes = new Byte[256];
             String data = null;
-            try{
+            try
+            {
                 // Enter the listening loop.
-                while(true)
+                while (true)
                 {
                     Console.Write("Waiting for a connection... ");
-            
+
                     // Perform a blocking call to accept requests.
                     // // You could also use server.AcceptSocket() here.
                     TcpClient client = server.AcceptTcpClient();
                     Console.WriteLine("Connected!");
-            
+
                     data = null;
-            
+
                     // Get a stream object for reading and writing
                     NetworkStream stream = client.GetStream();
-            
+
                     int i;
-            
+
                     // Loop to receive all the data sent by the client.
-                    while((i = stream.Read(bytes, 0, bytes.Length))!=0)
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
                         // Translate data bytes to a ASCII string.
                         data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                         Console.WriteLine("Received: {0}", data);
-            
+
                         // Process the data sent by the client.
                         data = data.ToUpper();
-            
+
                         byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-            
+
                         // Send back a response.
                         stream.Write(msg, 0, msg.Length);
                         Console.WriteLine("Sent: {0}", data);
                     }
-            
+
                     // Shutdown and end connection
                     client.Close();
                 }
             }
-            catch(SocketException e)
+            catch (SocketException e)
             {
                 Console.WriteLine("SocketException: {0}", e);
             }
@@ -121,21 +129,22 @@ namespace ChatApp
                 // Stop listening for new clients.
                 server.Stop();
             }
-            
+
             Console.WriteLine("\nHit enter to continue...");
             Console.Read();
         }
-        // Connect Socket to the remote endpoint using method Connect()
-        public void Connect(string serverAdress, int port)
+
+        public void SendMessage( String serverAdress,int port)
         {
             TcpClient client = new TcpClient(serverAdress, port);
-        }
-
-        public void SendMessage(string message, TcpClient client)
-        {
+            Message message = new Message();
+            
+            Console.WriteLine("Text eingeben: ");
+            message.Text = Console.ReadLine();
+            
             try
             {
-                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message.Text);
 
                 // Get a client stream for reading and writing.
                 //  Stream stream = client.GetStream();
@@ -175,12 +184,6 @@ namespace ChatApp
 
             Console.WriteLine("\n Press Enter to continue...");
             Console.Read();
-        
-    }
-
-        public void AcceptClient(string IpAdresse)
-        {
-            
         }
 
         public void RecieveMessage()
