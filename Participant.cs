@@ -62,6 +62,7 @@ namespace ChatApp
                 IPAddress localAddr = IPAddress.Parse(IpAdresse);
                 
                 server = new TcpListener(localAddr, port);
+                Console.WriteLine(localAddr);
 
                 // Start listening for client requests.
                 server.Start();

@@ -19,14 +19,13 @@ namespace ChatApp
              */
             
             // Starte den Server
-            Participant server = new Participant();
-            TcpListener listener = server.InitTcpServer();
-            server.TcpListener(listener);
+            //Participant server = new Participant("192.168.15.160", 3000);
+            //TcpListener listener = server.InitTcpServer();
+            //server.TcpListener(listener);
             
             // Oder starte den Client, wobei die IpAdressse und der Port des zu verbindenden Servers übergeben werden
-            Participant client = new Participant("192.168.15.160", 300);
-            
-            client.SendMessage("192.168.15.160", 3000);
+            Participant client = new Participant("10.91.57.163", 3000);
+            client.SendMessage("10.91.57.163", 3000);
             
             Console.ReadKey(true);
             
