@@ -2,6 +2,8 @@
 using System.Net;
 using System.Web;
 using System.Net.Sockets;
+using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace ChatApp
 {
@@ -21,12 +23,21 @@ namespace ChatApp
             // Starte den Server
             //Participant server = new Participant("192.168.15.160", 3000);
             //TcpListener listener = server.InitTcpServer();
-            //server.TcpListener(listener);
+            //server.ReadData(listener);
             
             // Oder starte den Client, wobei die IpAdressse und der Port des zu verbindenden Servers übergeben werden
-            Participant client = new Participant("10.91.57.163", 3000);
-            client.SendMessage("10.91.57.163", 3000);
+            //Participant client = new Participant("10.91.57.163", 3000);
+            //client.SendMessage("10.91.57.163", 3000);
+            Message message = new Message(24, "Chat App", "Hallo");
+
+            Console.WriteLine("Text eingeben: ");
+            message.Nachricht = Console.ReadLine();
+
+            string newmessage = JsonConvert.SerializeObject(message);
             
+            Console.WriteLine("json message {0}", newmessage);
+            Byte[] data = System.Text.Encoding.ASCII.GetBytes(newmessage);
+            Console.WriteLine(data);
             Console.ReadKey(true);
             
             

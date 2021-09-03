@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace ChatApp
 {
@@ -76,7 +78,7 @@ namespace ChatApp
             return server;
         }
 
-        public void TcpListener(TcpListener server)
+        public void ReadData(TcpListener server)
         {
             // Buffer for reading data
             Byte[] bytes = new Byte[256];
@@ -138,14 +140,16 @@ namespace ChatApp
         public void SendMessage( String serverAdress,int port)
         {
             TcpClient client = new TcpClient(serverAdress, port);
-            Message message = new Message();
-            
+            Message message = new Message(24, "Chat App", "Hallo");
+
             Console.WriteLine("Text eingeben: ");
-            message.Text = Console.ReadLine();
+            message.Nachricht = Console.ReadLine();
+
+            JsonConvert.ToString(message);
             
             try
             {
-                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message.Text);
+                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message.Nachricht);
 
                 // Get a client stream for reading and writing.
                 //  Stream stream = client.GetStream();

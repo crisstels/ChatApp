@@ -1,48 +1,62 @@
 using System;
+using Newtonsoft.Json;
 
 namespace ChatApp
 {
     public class Message
     {
-        private string _text;
-        private string _sender;
-        private string _reciever;
+        private int _laenge;
+        private String _application;
+        private String _nickname;
+        private string _nachricht;
 
-        public string Text
+        public int Laenge
         {
-            get => _text;
-            set => _text = value;
+            get => _laenge;
+            set => _laenge = value;
         }
 
-        public string Sender
+        public string Application
         {
-            get => _sender;
-            set => _sender = value;
+            get => _application;
+            set => _application = value;
         }
 
-        public string Reciever
+        public string Nickname
         {
-            get => _reciever;
-            set => _reciever = value;
+            get => _nickname;
+            set => _nickname = value;
+        }
+
+        public string Nachricht
+        {
+            get => _nachricht;
+            set => _nachricht = value;
         }
         
-        public Message(string text, string sender, string reciever)
+        public Message(int laenge, string application, string nickname)
         {
-            _text = text;
-            _sender = sender;
-            _reciever = reciever;
+            _laenge = laenge;
+            _application = application;
+            _nickname = nickname;
         }
 
         public Message()
         {
-            Text = "";
-            Sender = "";
-            Reciever = "";
+            this.Laenge = Laenge;
+            this.Application = Application;
+            this.Nickname = Nickname;
+            this.Nachricht = Nachricht;
         }
 
-        public void DisplayMessage()
+        public Byte[] ConvertMessageToByte(Message message)
         {
-            Console.WriteLine(Text);
+            string json = JsonConvert.SerializeObject(message);
+            Console.WriteLine("json message {0}", json);
+            Byte[] data = System.Text.Encoding.ASCII.GetBytes(json);
+
+            return data;
         }
+
     }
 }
