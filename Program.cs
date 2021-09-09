@@ -14,22 +14,36 @@ namespace ChatApp
             Console.WriteLine("Hello World!");
             Participant server = new Participant(3000);
             Participant client1 = new Participant(3001);
+            Participant client2 = new Participant(3002);
 
             client1.ConnectTo("192.168.15.160", 3000);
+            client2.ConnectTo("192.168.15.160", 3000);
             Console.WriteLine("Nachricht eingeben: ");
-
+            bool start = true;
             String msg= "";
-            while (msg != "c"){
-                System.Console.WriteLine("\nSie können nun ebenfalls Nachrichten schreiben. Senden durch <CR>, Beenden mit <c>.");
+            
+            while (start)
+            {
+                System.Console.WriteLine("\nSie können nun ebenfalls Nachrichten schreiben. Beenden Sie mit <:q>.");
                 System.Console.Write("Nachricht: ");
                 msg = System.Console.ReadLine();
-                if (msg != "c")
-                    client1.SendMessage(msg); 
+                if (msg == ":q")
+                {
+                    start = false;
+                }
+                else
+                {
+                    client1.SendMessage(msg);
                     System.Threading.Thread.Sleep(200);
+                }
             }
-
-
-
+            
+            
+            client1.Disconnect();
+            Console.WriteLine("Press any button to end");
+            Console.ReadKey(true);
+            server.CloseAllConnections();
+            
         }
     }
 }
