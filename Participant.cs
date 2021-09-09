@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using Newtonsoft.Json;
@@ -14,6 +16,27 @@ namespace ChatApp
         private string _ipAdresse;
         private int _port;
         private Message _text;
+        
+        private String _lastMessage;
+        private IPAddress _localAdress;
+
+        protected TcpListener   listener;       
+        protected Socket        connectionOut;
+        protected List<Socket>  connectionIn;
+        protected Thread        dispatchThread;
+        protected List<Thread>  receiverThread;
+
+        public string LastMessage
+        {
+            get => _lastMessage;
+            set => _lastMessage = value;
+        }
+        
+        public IPAddress LocalAdress
+        {
+            get => _localAdress;
+            set => _localAdress = value;
+        }
 
         public Message Text
         {
@@ -54,6 +77,48 @@ namespace ChatApp
             Text = new Message();
         }
 
+        public Participant(int port)
+        {
+            connectionIn = new List<Socket>();
+            receiverThread = new List<Thread>();
+            LocalAdress = IPAddress.Parse("192.168.15.160");
+            
+            listener = new TcpListener(LocalAdress, 3000);
+            listener.Start();
+            dispatchThread = new Thread(Dispatch);
+            dispatchThread.Start();
+        }
+
+        public void Dispatch()
+        {
+            while (true)
+            {
+                Socket sock = listener.AcceptSocket(); 
+                connectionIn.Add(sock);                 
+
+                Thread recv = new Thread(() => Recieve(sock));
+                recv.Start();                          
+                receiverThread.Add(recv);               
+            }
+        }
+
+        public void Recieve(Socket sock)
+        {
+            Byte[] buffer = new Byte[256];
+            while (true)
+            {
+                int lenOfMsg = sock.Receive(buffer);
+
+                IPEndPoint remoteIpEndPoint = sock.RemoteEndPoint as IPEndPoint;
+                String     remoteAddr = remoteIpEndPoint.Address.ToString();
+
+                LastMessage = Encoding.UTF8.GetString(buffer, 0, lenOfMsg);
+                System.Console.WriteLine("FROM   : " + remoteAddr + ":" + remoteIpEndPoint.Port +
+                                         "\nTO     : " + LocalAdress +
+                                         "\nMessage: " + LastMessage);
+            }
+        }
+
         public TcpListener InitTcpServer()
         {
             TcpListener server=null;
@@ -78,122 +143,38 @@ namespace ChatApp
             return server;
         }
 
-        public void ReadData(TcpListener server)
+        
+
+        public void SendMessage(string message)
         {
-            // Buffer for reading data
-            Byte[] bytes = new Byte[256];
-            String data = null;
-            try
-            {
-                // Enter the listening loop.
-                while (true)
-                {
-                    Console.Write("Waiting for a connection... ");
+            byte[] sendBuffer = Encoding.UTF8.GetBytes(message);
 
-                    // Perform a blocking call to accept requests.
-                    // // You could also use server.AcceptSocket() here.
-                    TcpClient client = server.AcceptTcpClient();
-                    Console.WriteLine("Connected!");
-
-                    data = null;
-
-                    // Get a stream object for reading and writing
-                    NetworkStream stream = client.GetStream();
-
-                    int i;
-
-                    // Loop to receive all the data sent by the client.
-                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                    {
-                        // Translate data bytes to a ASCII string.
-                        data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                        Console.WriteLine("Received: {0}", data);
-
-                        // Process the data sent by the client.
-                        data = data.ToUpper();
-
-                        byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-
-                        // Send back a response.
-                        stream.Write(msg, 0, msg.Length);
-                        Console.WriteLine("Sent: {0}", data);
-                    }
-
-                    // Shutdown and end connection
-                    client.Close();
-                }
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
-            finally
-            {
-                // Stop listening for new clients.
-                server.Stop();
-            }
-
-            Console.WriteLine("\nHit enter to continue...");
-            Console.Read();
+            connectionOut.Send(sendBuffer);
         }
 
-        public void SendMessage( String serverAdress,int port)
+        public void Disconnect()
         {
-            TcpClient client = new TcpClient(serverAdress, port);
-            Message message = new Message(24, "Chat App", "Hallo");
-
-            Console.WriteLine("Text eingeben: ");
-            message.Nachricht = Console.ReadLine();
-
-            JsonConvert.ToString(message);
-            
-            try
-            {
-                Byte[] data = System.Text.Encoding.ASCII.GetBytes(message.Nachricht);
-
-                // Get a client stream for reading and writing.
-                //  Stream stream = client.GetStream();
-
-                NetworkStream stream = client.GetStream();
-
-                // Send the message to the connected TcpServer.
-                stream.Write(data, 0, data.Length);
-
-                Console.WriteLine("Sent: {0}", message);
-
-                // Receive the TcpServer.response.
-
-                // Buffer to store the response bytes.
-                data = new Byte[256];
-
-                // String to store the response ASCII representation.
-                String responseData = String.Empty;
-
-                // Read the first batch of the TcpServer response bytes.
-                Int32 bytes = stream.Read(data, 0, data.Length);
-                responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-                Console.WriteLine("Received: {0}", responseData);
-
-                // Close everything.
-                stream.Close();
-                client.Close();
-            }
-            catch (ArgumentNullException e)
-            {
-                Console.WriteLine("ArgumentNullException: {0}", e);
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine("SocketException: {0}", e);
-            }
-
-            Console.WriteLine("\n Press Enter to continue...");
-            Console.Read();
+            connectionOut.Close();
+            connectionOut = null;
         }
-
-        public void RecieveMessage()
+        
+        public void CloseAllConnections()
         {
-            
+            for (int i = 0; i < connectionIn.Count; i++){
+                connectionIn[i].Close();
+                receiverThread[i].Interrupt();
+                listener.Stop();
+                dispatchThread.Interrupt(); //only for .Net5
+            }
+     
+        }
+        
+        public void ConnectTo(String strIP4Addr, int portNr)
+        {
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(strIP4Addr), portNr);
+
+            connectionOut = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            connectionOut.Connect(endPoint);
         }
     }
 }

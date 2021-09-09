@@ -12,35 +12,24 @@ namespace ChatApp
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            /*
-             * Um dieses Programm auszuprobieren muss man 2 Projekte anlegen. In Projekt 1 wird der Server gestartet und
-             * in Projekt 2 wird der Client gestartet. Dann wartet der Server darauf, dass sich jemand mit ihm verbinden möchte.
-             * Der Client kann über die Konsole Nachrichten (strings) eingeben und an den Server senden. Dies wurde so einfach gehalten,
-             * da der nächste Prototyp Multithreading beeinhalten wird und dadurch braucht man nur noch ein Projekt zu starten.
-             * So wird dann ein Server und ein CLient gleichzeitig gestartet.
-             */
-            
-            // Starte den Server
-            //Participant server = new Participant("192.168.15.160", 3000);
-            //TcpListener listener = server.InitTcpServer();
-            //server.ReadData(listener);
-            
-            // Oder starte den Client, wobei die IpAdressse und der Port des zu verbindenden Servers übergeben werden
-            //Participant client = new Participant("10.91.57.163", 3000);
-            //client.SendMessage("10.91.57.163", 3000);
-            Message message = new Message(24, "Chat App", "Hallo");
+            Participant server = new Participant(3000);
+            Participant client1 = new Participant(3001);
 
-            Console.WriteLine("Text eingeben: ");
-            message.Nachricht = Console.ReadLine();
+            client1.ConnectTo("192.168.15.160", 3000);
+            Console.WriteLine("Nachricht eingeben: ");
 
-            string newmessage = JsonConvert.SerializeObject(message);
-            
-            Console.WriteLine("json message {0}", newmessage);
-            Byte[] data = System.Text.Encoding.ASCII.GetBytes(newmessage);
-            Console.WriteLine(data);
-            Console.ReadKey(true);
-            
-            
+            String msg= "";
+            while (msg != "c"){
+                System.Console.WriteLine("\nSie können nun ebenfalls Nachrichten schreiben. Senden durch <CR>, Beenden mit <c>.");
+                System.Console.Write("Nachricht: ");
+                msg = System.Console.ReadLine();
+                if (msg != "c")
+                    client1.SendMessage(msg); 
+                    System.Threading.Thread.Sleep(200);
+            }
+
+
+
         }
     }
 }
