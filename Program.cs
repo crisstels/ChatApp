@@ -12,12 +12,10 @@ namespace ChatApp
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Participant server = new Participant(3000);
-            Participant client1 = new Participant(3001);
-            Participant client2 = new Participant(3002);
+            Participant server = new Participant(3000, true);
+            Participant client1 = new Participant(3001, false);
 
             client1.ConnectTo("192.168.15.160", 3000);
-            client2.ConnectTo("192.168.15.160", 3000);
             Console.WriteLine("Nachricht eingeben: ");
             bool start = true;
             String msg= "";
@@ -38,8 +36,7 @@ namespace ChatApp
                 }
             }
             
-            
-            client1.Disconnect();
+            //client1.Disconnect();
             Console.WriteLine("Press any button to end");
             Console.ReadKey(true);
             server.CloseAllConnections();

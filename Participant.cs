@@ -21,6 +21,7 @@ namespace ChatApp
         private String _lastMessage;
         private IPAddress _localAdress;
         private NetworkStream _stream;
+        private bool _isServer;
 
         protected TcpListener   listener;       
         protected TcpClient     client;
@@ -51,22 +52,29 @@ namespace ChatApp
             set => _stream = value;
         }
         
+        public bool IsServer
+        {
+            get => _isServer;
+            set => _isServer = value;
+        }
+        
         public Participant()
         {
             LastMessage = " ";
             Text = new Message();
         }
 
-        public Participant(int port)
+        public Participant(int port, bool isServer)
         {
             connectionIn = new List<Socket>();
             receiverThread = new List<Thread>();
             LocalAdress = IPAddress.Parse("192.168.15.160");
-
-            listener = new TcpListener(LocalAdress, port);
-            listener.Start();
-            dispatchThread = new Thread(Dispatch);
-            dispatchThread.Start();
+            if(isServer){
+                listener = new TcpListener(LocalAdress, port);
+                listener.Start();
+                dispatchThread = new Thread(Dispatch);
+                dispatchThread.Start();
+            }
         }
 
         public void Dispatch()
@@ -93,9 +101,10 @@ namespace ChatApp
         public void Recieve(Socket sock)
         {
             Byte[] buffer = new Byte[256];
+            bool x = true;
             try
             {
-                while (true)
+                while (x)
                 {
                     int lenOfMsg = sock.Receive(buffer);
 
@@ -106,6 +115,11 @@ namespace ChatApp
                     System.Console.WriteLine("FROM   : " + remoteAddr + ":" + remoteIpEndPoint.Port +
                                              "\nTO     : " + LocalAdress +
                                              "\nMessage: " + LastMessage);
+
+                    if (LastMessage == ":q")
+                    {
+                        x = false;
+                    }
                 }
             }
             catch (Exception e)
@@ -122,16 +136,26 @@ namespace ChatApp
             Stream.Write(sendBuffer, 0, sendBuffer.Length);
         }
 
-        public void Disconnect()
-        {
-            client.Close();
-            Stream = null;
-            client = null;
-
-        }
+        // public void Disconnect()
+        // {
+        //     client.GetStream().Close();
+        //     client.Dispose();
+        //     Stream.Dispose();
+        //     Stream = null;
+        //     client = null;
+        //
+        // }
         
         public void CloseAllConnections()
         {
+            try
+            {
+                //Console.Write(Stream.Length);
+                //Stream.Close();
+                
+                // client.Close();
+                // Stream = null;
+                // client = null;
 
                 for (int i = 0; i < connectionIn.Count; i++){
                     connectionIn[i].Close();
@@ -140,7 +164,12 @@ namespace ChatApp
                     dispatchThread.Interrupt(); //only for .Net5
                 }
 
-                Stream = null;
+            }
+            catch (System.NullReferenceException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
 
         }
         
