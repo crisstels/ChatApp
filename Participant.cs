@@ -8,10 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using Newtonsoft.Json;
-/*notes: - unterscheidung server client im konstructor
-          - stream nicht richtig geschlossen ?
-          - zurück zu streams
-          */ 
+
 namespace ChatApp
 {
     public class Participant
@@ -64,17 +61,23 @@ namespace ChatApp
             Text = new Message();
         }
 
-        public Participant(int port, bool isServer)
+        public Participant(int port)
         {
-            connectionIn = new List<Socket>();
-            receiverThread = new List<Thread>();
-            LocalAdress = IPAddress.Parse("192.168.15.160");
-            if(isServer){
+            try
+            {
+                connectionIn = new List<Socket>();
+                receiverThread = new List<Thread>();
+                LocalAdress = IPAddress.Parse("192.168.15.160");
                 listener = new TcpListener(LocalAdress, port);
                 listener.Start();
                 dispatchThread = new Thread(Dispatch);
                 dispatchThread.Start();
             }
+            catch (Exception e)
+            {
+                Console.WriteLine("constructor catch" +e);
+            }
+            
         }
 
         public void Dispatch()
@@ -136,41 +139,33 @@ namespace ChatApp
             Stream.Write(sendBuffer, 0, sendBuffer.Length);
         }
 
-        // public void Disconnect()
-        // {
-        //     client.GetStream().Close();
-        //     client.Dispose();
-        //     Stream.Dispose();
-        //     Stream = null;
-        //     client = null;
-        //
-        // }
-        
+        public void Disconnect()
+        {
+            foreach (var t in connectionIn)
+            {
+                t.Close();
+            }
+            client.GetStream().Close();
+            client.Dispose();
+            Stream.Dispose();
+
+        }        
         public void CloseAllConnections()
         {
             try
             {
-                //Console.Write(Stream.Length);
-                //Stream.Close();
-                
-                // client.Close();
-                // Stream = null;
-                // client = null;
-
-                for (int i = 0; i < connectionIn.Count; i++){
-                    connectionIn[i].Close();
-                    receiverThread[i].Interrupt();
+                foreach (var t in receiverThread)
+                {
+                    t.Interrupt();
                     listener.Stop();
                     dispatchThread.Interrupt(); //only for .Net5
                 }
-
             }
-            catch (System.NullReferenceException e)
+            catch (ThreadAbortException ex)
             {
-                Console.WriteLine(e);
-                throw;
+                Console.WriteLine("Thread is aborted and the code is "
+                                  + ex.ExceptionState);
             }
-
         }
         
         public void ConnectTo(String strIP4Addr, int portNr)

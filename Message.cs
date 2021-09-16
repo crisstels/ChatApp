@@ -34,9 +34,8 @@ namespace ChatApp
             set => _nachricht = value;
         }
         
-        public Message(int laenge, string application, string nickname)
+        public Message(string application, string nickname)
         {
-            _laenge = laenge;
             _application = application;
             _nickname = nickname;
         }
@@ -54,6 +53,7 @@ namespace ChatApp
             string json = JsonConvert.SerializeObject(message);
             Console.WriteLine("json message {0}", json);
             Byte[] data = System.Text.Encoding.ASCII.GetBytes(json);
+            Console.WriteLine(data);
 
             return data;
         }

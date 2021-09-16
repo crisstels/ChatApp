@@ -7,18 +7,21 @@ using Newtonsoft.Json;
 
 namespace ChatApp
 {
+    delegate void DelegateCloseConnection();
     class Program
     {
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Participant server = new Participant(3000, true);
-            Participant client1 = new Participant(3001, false);
+            Participant server = new Participant(3000);
+            Participant client1 = new Participant(3001);
 
             client1.ConnectTo("192.168.15.160", 3000);
             Console.WriteLine("Nachricht eingeben: ");
             bool start = true;
             String msg= "";
+            DelegateCloseConnection closeConnection = new DelegateCloseConnection(client1.Disconnect);
+            closeConnection += server.CloseAllConnections;
             
             while (start)
             {
@@ -37,6 +40,8 @@ namespace ChatApp
             }
             
             //client1.Disconnect();
+            Console.Write("vor delegate");
+            closeConnection();
             Console.WriteLine("Press any button to end");
             Console.ReadKey(true);
             server.CloseAllConnections();
