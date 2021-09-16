@@ -15,8 +15,10 @@ namespace ChatApp
         static void Main(string[] args)
         {
             // Instanziiere Objekte
-            Participant server = new Participant(3000);
-            Participant client1 = new Participant(3001);
+            Console.WriteLine("Please enter your Ip-Adress (Ipv4): ");
+            string ipAdress = Console.ReadLine();
+            Participant server = new Participant(3000, ipAdress);
+            Participant client1 = new Participant(3001, ipAdress);
             Message message = new Message("Chat App", "me");
             bool start = true;
             String msg= "";
@@ -24,7 +26,7 @@ namespace ChatApp
             closeConnection += server.StopThreads;
             
             // Baue Verbindung auf
-            client1.ConnectTo("192.168.0.99", 3000);
+            client1.ConnectTo(ipAdress, 3000);
             Console.WriteLine("Sie können nun Nachrichten eingeben.Beenden Sie mit <:q>.");
             
             // Nachrichten schreiben, solange bis :q eingegeben wird

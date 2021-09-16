@@ -64,14 +64,13 @@ namespace ChatApp
             TextMessage = new Message("Chat App", "me");
         }
 
-        public Participant(int port)
+        public Participant(int port, string ipAdress)
         {
             try
             {
                 connectionIn = new List<Socket>();
                 receiverThread = new List<Thread>();
-                //LocalAdress = IPAddress.Parse("192.168.15.160");
-                LocalAdress = IPAddress.Parse("192.168.0.99");
+                LocalAdress = IPAddress.Parse(ipAdress);
                 listener = new TcpListener(LocalAdress, port);
                 listener.Start();
                 dispatchThread = new Thread(Dispatch);
