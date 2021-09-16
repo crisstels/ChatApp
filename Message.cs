@@ -5,10 +5,17 @@ namespace ChatApp
 {
     public class Message
     {
+        #region Properties
+
         private int _laenge;
         private String _application;
         private String _nickname;
         private string _nachricht;
+
+
+        #endregion
+
+        #region Accessors/Modifiers
 
         public int Laenge
         {
@@ -33,11 +40,15 @@ namespace ChatApp
             get => _nachricht;
             set => _nachricht = value;
         }
-        
+
+        #endregion
+
+        #region Constructors
+
         public Message(string application, string nickname)
         {
-            _application = application;
-            _nickname = nickname;
+            Application = application;
+            Nickname = nickname;
         }
 
         public Message()
@@ -48,19 +59,17 @@ namespace ChatApp
             this.Nachricht = Nachricht;
         }
 
+        #endregion
+        
+        // konvertiert einen Nachrichtenstring in ein byte object
         public Byte[] ConvertMessageToByte()
         {
             string json = JsonConvert.SerializeObject(this);
-            Console.WriteLine("json message {0}", json);
             Laenge = json.Length;
             json = JsonConvert.SerializeObject(this);
-            Console.WriteLine("json message1 {0}", json);
             Laenge = json.Length;
             json = JsonConvert.SerializeObject(this);
-            Console.WriteLine("json message2 {0}", json);
             Byte[] data = System.Text.Encoding.ASCII.GetBytes(json);
-            Console.WriteLine(data);
-
             return data;
         }
 

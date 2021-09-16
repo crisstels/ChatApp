@@ -14,18 +14,22 @@ namespace ChatApp
 {
     public class Participant
     {
+        #region Properties
+
         private Message _textMessage;
-        
         private String _lastMessage;
         private IPAddress _localAdress;
         private NetworkStream _stream;
-        private bool _isServer;
 
         protected TcpListener   listener;       
         protected TcpClient     client;
         protected List<Socket>  connectionIn;
         protected Thread        dispatchThread;
         protected List<Thread>  receiverThread;
+
+        #endregion
+
+        #region Accessors/Modifiers
 
         public string LastMessage
         {
@@ -49,17 +53,15 @@ namespace ChatApp
             get => _stream;
             set => _stream = value;
         }
-        
-        public bool IsServer
-        {
-            get => _isServer;
-            set => _isServer = value;
-        }
-        
+
+        #endregion
+
+        #region Contructor
+
         public Participant()
         {
             LastMessage = " ";
-            TextMessage = new Message("app", "me");
+            TextMessage = new Message("Chat App", "me");
         }
 
         public Participant(int port)
@@ -68,7 +70,8 @@ namespace ChatApp
             {
                 connectionIn = new List<Socket>();
                 receiverThread = new List<Thread>();
-                LocalAdress = IPAddress.Parse("192.168.15.160");
+                //LocalAdress = IPAddress.Parse("192.168.15.160");
+                LocalAdress = IPAddress.Parse("192.168.0.99");
                 listener = new TcpListener(LocalAdress, port);
                 listener.Start();
                 dispatchThread = new Thread(Dispatch);
@@ -76,12 +79,16 @@ namespace ChatApp
             }
             catch (Exception e)
             {
-                Console.WriteLine("constructor catch" +e);
+                Console.WriteLine("Thread is aborted and the error message is "
+                                  + e);
             }
             
         }
 
-        public void Dispatch()
+        #endregion
+        
+        // startet Threads für das warten und empfangen von Nachrichten
+        private void Dispatch()
         {
             try
             {
@@ -97,12 +104,14 @@ namespace ChatApp
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine("Thread is aborted and the error message is "
+                                  + e);
                 throw;
             }
         }
-
-        public void Recieve(Socket sock)
+        
+        // empfängt Nachrichten
+        private void Recieve(Socket sock)
         {
             Byte[] buffer = new Byte[256];
             bool x = true;
@@ -112,19 +121,16 @@ namespace ChatApp
                 {
                     int lenOfMsg = sock.Receive(buffer);
 
-                    IPEndPoint remoteIpEndPoint = sock.RemoteEndPoint as IPEndPoint;
-                    String     remoteAddr = remoteIpEndPoint.Address.ToString();
-
                     LastMessage = Encoding.UTF8.GetString(buffer, 0, lenOfMsg);
                     var json = (JObject)JsonConvert.DeserializeObject(LastMessage);
-                    string nachricht = json["Nachricht"].Value<string>();
+
+                    string app = json["Application"].Value<string>();
+                    string message = json["Nachricht"].Value<string>();
                     string nick = json["Nickname"].Value<string>();
                     
-                    Console.WriteLine("FROM   : " + nick  +
-                                             "\nTO     : " + LocalAdress +
-                                             "\nMessage: " + nachricht);
+                    Console.WriteLine(nick + ":" + message + "\n");
 
-                    if (LastMessage == ":q")
+                    if (LastMessage == ":q" || app != "Chat App")
                     {
                         x = false;
                     }
@@ -132,18 +138,21 @@ namespace ChatApp
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine("Thread is aborted and the error message is "
+                                  + e);
                 throw;
             }
         }
-
+        
+        //sendet Nachrichten
         public void SendMessage(Message message, string text)
         {
             message.Nachricht = text;
             byte[] sendBuffer = message.ConvertMessageToByte();
             Stream.Write(sendBuffer, 0, sendBuffer.Length);
         }
-
+        
+        // die Verbindung zu den Clients wird gestoppt, der Stream wird beendet
         public void Disconnect()
         {
             foreach (var t in connectionIn)
@@ -154,8 +163,10 @@ namespace ChatApp
             client.Dispose();
             Stream.Dispose();
 
-        }        
-        public void CloseAllConnections()
+        }
+        
+        // Threads werden interrupted, daher wird eine Fehlermeldung gegeben
+        public void StopThreads()
         {
             try
             {
@@ -173,11 +184,12 @@ namespace ChatApp
             }
         }
         
+        // baut eine Verbindung von einem TCPClient zu einem server auf
         public void ConnectTo(String strIP4Addr, int portNr)
         {
             client = new TcpClient(strIP4Addr.ToString(), portNr);
-            //client.Connect(endPoint);
             Stream = client.GetStream();
+            Console.WriteLine("Connected");
         }
     }
 }
