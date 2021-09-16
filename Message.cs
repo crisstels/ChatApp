@@ -48,10 +48,16 @@ namespace ChatApp
             this.Nachricht = Nachricht;
         }
 
-        public Byte[] ConvertMessageToByte(Message message)
+        public Byte[] ConvertMessageToByte()
         {
-            string json = JsonConvert.SerializeObject(message);
+            string json = JsonConvert.SerializeObject(this);
             Console.WriteLine("json message {0}", json);
+            Laenge = json.Length;
+            json = JsonConvert.SerializeObject(this);
+            Console.WriteLine("json message1 {0}", json);
+            Laenge = json.Length;
+            json = JsonConvert.SerializeObject(this);
+            Console.WriteLine("json message2 {0}", json);
             Byte[] data = System.Text.Encoding.ASCII.GetBytes(json);
             Console.WriteLine(data);
 

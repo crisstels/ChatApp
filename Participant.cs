@@ -8,12 +8,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ChatApp
 {
     public class Participant
     {
-        private Message _text;
+        private Message _textMessage;
         
         private String _lastMessage;
         private IPAddress _localAdress;
@@ -38,10 +39,10 @@ namespace ChatApp
             set => _localAdress = value;
         }
 
-        public Message Text
+        public Message TextMessage
         {
-            get => _text;
-            set => _text = value;
+            get => _textMessage;
+            set => _textMessage = value;
         }
         public NetworkStream Stream
         {
@@ -58,7 +59,7 @@ namespace ChatApp
         public Participant()
         {
             LastMessage = " ";
-            Text = new Message();
+            TextMessage = new Message("app", "me");
         }
 
         public Participant(int port)
@@ -115,9 +116,13 @@ namespace ChatApp
                     String     remoteAddr = remoteIpEndPoint.Address.ToString();
 
                     LastMessage = Encoding.UTF8.GetString(buffer, 0, lenOfMsg);
-                    System.Console.WriteLine("FROM   : " + remoteAddr + ":" + remoteIpEndPoint.Port +
+                    var json = (JObject)JsonConvert.DeserializeObject(LastMessage);
+                    string nachricht = json["Nachricht"].Value<string>();
+                    string nick = json["Nickname"].Value<string>();
+                    
+                    Console.WriteLine("FROM   : " + nick  +
                                              "\nTO     : " + LocalAdress +
-                                             "\nMessage: " + LastMessage);
+                                             "\nMessage: " + nachricht);
 
                     if (LastMessage == ":q")
                     {
@@ -132,10 +137,10 @@ namespace ChatApp
             }
         }
 
-        public void SendMessage(string message)
+        public void SendMessage(Message message, string text)
         {
-            byte[] sendBuffer = Encoding.UTF8.GetBytes(message);
-
+            message.Nachricht = text;
+            byte[] sendBuffer = message.ConvertMessageToByte();
             Stream.Write(sendBuffer, 0, sendBuffer.Length);
         }
 
