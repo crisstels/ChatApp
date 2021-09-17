@@ -4,7 +4,6 @@ using System.Web;
 using System.Net.Sockets;
 using System.Text.Json;
 using Newtonsoft.Json;
-// TODO: überprüfe, ob application type in Ordnung ist
 // Damit das Programm lauffähig ist, wird  .NET5 benötigt
 namespace ChatApp
 {
