@@ -14,18 +14,16 @@ namespace ChatApp
         static void Main(string[] args)
         {
             // Instanziiere Objekte
-            Console.WriteLine("Please enter your Ip-Adress (Ipv4): ");
+            Console.WriteLine("Please enter the Ip-Adress (Ipv4) of server: ");
             string ipAdress = Console.ReadLine();
-            Participant server = new Participant(3000, ipAdress);
-            Participant client1 = new Participant(3001, ipAdress);
-            Message message = new Message("Chat App", "me");
+            //Participant server = new Participant(3000, ipAdress);
+            Participant client1 = new Participant(ipAdress, 3001);
+            Message message = new Message("Chat App", "you");
             bool start = true;
             String msg= "";
             DelegateCloseConnection closeConnection = new DelegateCloseConnection(client1.Disconnect);
-            closeConnection += server.StopThreads;
+            closeConnection += client1.StopThreads;
             
-            // Baue Verbindung auf
-            client1.ConnectTo(ipAdress, 3000);
             Console.WriteLine("Sie können nun Nachrichten eingeben.Beenden Sie mit <:q>.");
             
             // Nachrichten schreiben, solange bis :q eingegeben wird
@@ -49,7 +47,7 @@ namespace ChatApp
             closeConnection();
             Console.WriteLine("Press any button to end");
             Console.ReadKey(true);
-            server.StopThreads();
+            client1.StopThreads();
             
         }
     }

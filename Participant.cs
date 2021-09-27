@@ -19,13 +19,17 @@ namespace ChatApp
         private Message _textMessage;
         private String _lastMessage;
         private IPAddress _localAdress;
+        private IPAddress _remoteAdress;
+
+
         private NetworkStream _stream;
 
         protected TcpListener   listener;       
-        protected TcpClient     client;
+        protected TcpClient     sender;
         protected List<Socket>  connectionIn;
         protected Thread        dispatchThread;
         protected List<Thread>  receiverThread;
+        protected bool stopListener;
 
         #endregion
 
@@ -41,6 +45,12 @@ namespace ChatApp
         {
             get => _localAdress;
             set => _localAdress = value;
+        }
+        
+        public IPAddress RemoteAdress
+        {
+            get => _remoteAdress;
+            set => _remoteAdress = value;
         }
 
         public Message TextMessage
@@ -64,24 +74,48 @@ namespace ChatApp
             TextMessage = new Message("Chat App", "me");
         }
 
-        public Participant(int port, string ipAdress)
+        public Participant(string ipAdress, int port)
         {
+            connectionIn = new List<Socket>();
+            receiverThread = new List<Thread>();
+            LocalAdress = IPAddress.Parse(ipAdress);
+            listener = new TcpListener(LocalAdress, port);
+            sender = new TcpClient(LocalAdress.ToString(), 3001);
+            
             try
             {
-                connectionIn = new List<Socket>();
-                receiverThread = new List<Thread>();
-                LocalAdress = IPAddress.Parse(ipAdress);
-                listener = new TcpListener(LocalAdress, port);
                 listener.Start();
-                dispatchThread = new Thread(Dispatch);
-                dispatchThread.Start();
+                Console.WriteLine("Listening on {0}, Writing to 3001", port );
             }
             catch (Exception e)
             {
                 Console.WriteLine("Thread is aborted and the error message is "
                                   + e);
             }
-            
+
+            try
+            {
+                dispatchThread = new Thread(Dispatch);
+                dispatchThread.Start();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Thread is aborted and the error message is "
+                                  + e);
+            }
+
+            try
+            {
+                Stream = sender.GetStream();
+                Console.Write("connected");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
 
         #endregion
@@ -158,8 +192,8 @@ namespace ChatApp
             {
                 t.Close();
             }
-            client.GetStream().Close();
-            client.Dispose();
+            sender.GetStream().Close();
+            sender.Dispose();
             Stream.Dispose();
 
         }
@@ -184,10 +218,10 @@ namespace ChatApp
         }
         
         // baut eine Verbindung von einem TCPClient zu einem server auf
-        public void ConnectTo(String strIP4Addr, int portNr)
+        public void ConnectTo(int portNr)
         {
-            client = new TcpClient(strIP4Addr.ToString(), portNr);
-            Stream = client.GetStream();
+            sender = new TcpClient(LocalAdress.ToString(), portNr);
+            Stream = sender.GetStream();
             Console.WriteLine("Connected");
         }
     }
